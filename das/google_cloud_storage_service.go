@@ -23,29 +23,27 @@ import (
 
 type GoogleCloudStorageOperator interface {
 	Bucket(name string) *googlestorage.BucketHandle
-	Upload(ctx context.Context, bucket, objectPrefix string, value []byte) error
+	Upload(ctx context.Context, bucket, objectPrefix string, value []byte, discardAfterTimeout bool, timeout uint64) error
 	Download(ctx context.Context, bucket, objectPrefix string, key common.Hash) ([]byte, error)
 	Close(ctx context.Context) error
 }
 
 type GoogleCloudStorageClient struct {
-	client              *googlestorage.Client
-	discardAfterTimeout bool
-	timeout             uint64
+	client *googlestorage.Client
 }
 
 func (g *GoogleCloudStorageClient) Bucket(name string) *googlestorage.BucketHandle {
 	return g.client.Bucket(name)
 }
 
-func (g *GoogleCloudStorageClient) Upload(ctx context.Context, bucket, objectPrefix string, value []byte) error {
+func (g *GoogleCloudStorageClient) Upload(ctx context.Context, bucket, objectPrefix string, value []byte, discardAfterTimeout bool, timeout uint64) error {
 	obj := g.client.Bucket(bucket).Object(objectPrefix + EncodeStorageServiceKey(dastree.Hash(value)))
 	w := obj.NewWriter(ctx)
 
-	if g.discardAfterTimeout && g.timeout <= math.MaxInt64 {
+	if discardAfterTimeout && timeout <= math.MaxInt64 {
 		w.Retention = &googlestorage.ObjectRetention{
 			Mode:        "Unlocked",
-			RetainUntil: time.Unix(int64(g.timeout), 0),
+			RetainUntil: time.Unix(int64(timeout), 0),
 		}
 	}
 
@@ -107,7 +105,7 @@ func NewGoogleCloudStorageService(config GoogleCloudStorageServiceConfig) (Stora
 		return nil, fmt.Errorf("error creating Google Cloud Storage client: %w", err)
 	}
 	service := &GoogleCloudStorageService{
-		operator:            &GoogleCloudStorageClient{client: client, discardAfterTimeout: config.DiscardAfterTimeout, timeout: 0},
+		operator:            &GoogleCloudStorageClient{client: client},
 		bucket:              config.Bucket,
 		objectPrefix:        config.ObjectPrefix,
 		discardAfterTimeout: config.DiscardAfterTimeout,
@@ -118,8 +116,7 @@ func NewGoogleCloudStorageService(config GoogleCloudStorageServiceConfig) (Stora
 func (gcs *GoogleCloudStorageService) Put(ctx context.Context, value []byte, timeout uint64) error {
 	logPut("das.GoogleCloudStorageService.Store", value, timeout, gcs)
 
-	gcs.operator.timeout = timeout
-	if err := gcs.operator.Upload(ctx, gcs.bucket, gcs.objectPrefix, value); err != nil {
+	if err := gcs.operator.Upload(ctx, gcs.bucket, gcs.objectPrefix, value, gcs.discardAfterTimeout, timeout); err != nil {
 		log.Error("das.GoogleCloudStorageService.Store", "err", err)
 		return err
 	}
