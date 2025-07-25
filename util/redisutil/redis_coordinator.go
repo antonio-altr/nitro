@@ -145,7 +145,7 @@ func (rc *RedisCoordinator) GetLiveliness(ctx context.Context) ([]string, error)
 	for {
 		log.Info("GetLiveliness 2")
 		keySlice, cursor, err := rc.Client.Scan(ctx, cursor, WANTS_LOCKOUT_KEY_PREFIX+"*", 0).Result()
-		log.Info("GetLiveliness 3")
+		log.Info("GetLiveliness 3", "keySlice", keySlice, "cursor", cursor)
 		if err != nil {
 			return []string{}, err
 		}
