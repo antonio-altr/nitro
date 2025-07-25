@@ -141,17 +141,24 @@ func (rc *RedisCoordinator) GetPriorities(ctx context.Context) ([]string, error)
 func (rc *RedisCoordinator) GetLiveliness(ctx context.Context) ([]string, error) {
 	var livelinessList []string
 	cursor := uint64(0)
+	log.Info("GetLiveliness 1")
 	for {
+		log.Info("GetLiveliness 2")
 		keySlice, cursor, err := rc.Client.Scan(ctx, cursor, WANTS_LOCKOUT_KEY_PREFIX+"*", 0).Result()
+		log.Info("GetLiveliness 3")
 		if err != nil {
 			return []string{}, err
 		}
+		log.Info("GetLiveliness 4")
 		livelinessList = append(livelinessList, keySlice...)
+		log.Info("GetLiveliness 5")
 		if cursor == 0 {
 			break
 		}
 	}
+	log.Info("GetLiveliness 6")
 	for i, elem := range livelinessList {
+		log.Info("GetLiveliness 7")
 		url := strings.TrimPrefix(elem, WANTS_LOCKOUT_KEY_PREFIX)
 		livelinessList[i] = url
 	}
