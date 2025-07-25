@@ -311,18 +311,23 @@ func (sm *manager) pushUpdates(ctx context.Context) {
 
 // refreshAllLists gets the current status of all the lists displayed in the UI
 func (sm *manager) refreshAllLists(ctx context.Context) {
+	log.Info("refreshAllLists 1")
 	priorityList, err := sm.redisCoordinator.GetPriorities(ctx)
 	if err != nil {
 		panic(err)
 	}
+	log.Info("refreshAllLists 2")
 	sm.priorityList = priorityList
 	sm.prioritiesSet = getMapfromlist(priorityList)
+	log.Info("refreshAllLists 3")
 
 	livelinessList, err := sm.redisCoordinator.GetLiveliness(ctx)
 	if err != nil {
 		panic(err)
 	}
+	log.Info("refreshAllLists 4")
 	sm.livelinessSet = getMapfromlist(livelinessList)
+	log.Info("refreshAllLists 5")
 
 	urlList := []string{}
 	for url := range sm.livelinessSet {
@@ -331,6 +336,7 @@ func (sm *manager) refreshAllLists(ctx context.Context) {
 		}
 	}
 	sm.nonPriorityList = urlList
+	log.Info("refreshAllLists 6")
 }
 
 func getMapfromlist(list []string) map[string]bool {
