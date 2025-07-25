@@ -43,6 +43,8 @@ func main() {
 	ctx, cancelFunc := context.WithCancel(context.Background())
 	defer cancelFunc()
 
+	log.Info("MAGIC 1")
+
 	args := os.Args[1:]
 	if len(args) != 1 {
 		fmt.Fprintf(os.Stderr, "Usage: seq-coordinator-manager [redis-url]\n")
@@ -53,6 +55,8 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+
+	log.Info("MAGIC 2")
 
 	seqManager := &manager{
 		redisCoordinator: &rediscoordinator.RedisCoordinator{
@@ -65,8 +69,12 @@ func main() {
 		maxURLSize: 100,
 	}
 
+	log.Info("MAGIC 3")
+
 	seqManager.refreshAllLists(ctx)
+	log.Info("MAGIC 4")
 	seqManager.populateLists(ctx)
+	log.Info("MAGIC 5")
 
 	prioritySeqList.SetSelectedFunc(func(index int, name string, second_name string, shortcut rune) {
 		nonPriorityForm.Clear(true)
